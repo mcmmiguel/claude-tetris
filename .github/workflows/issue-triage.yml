@@ -83,6 +83,16 @@ jobs:
                ### Preguntas abiertas
                (solo si el issue es ambiguo o le falta información; si no, escribe "Ninguna")
 
+            Formato del diagnóstico: debe ser GitHub Flavored Markdown válido, que se renderice bien
+            como comentario de issue en GitHub:
+            - Encabezados con `###`, listas con `-` o `1.`, y una línea en blanco antes y después de cada
+              encabezado, lista, tabla o bloque de código.
+            - Rutas, nombres de funciones, variables y constantes entre backticks (p. ej. `game.js`, `tryRotate`).
+            - Fragmentos de código en bloques cercados con el lenguaje indicado (```js, ```css, ```html).
+            - Para referenciar líneas, usa el formato `game.js:120` o enlaces relativos al repositorio.
+            - Puedes usar tablas Markdown, listas de tareas (`- [ ]`) y `<details><summary>` para contenido largo.
+            - No uses HTML fuera de `<details>`/`<summary>`, ni envuelvas todo el diagnóstico en un bloque de código.
+
             El diagnóstico debe servir como guía para que un desarrollador implemente la solución después.
 
       - name: Publish or update diagnosis comment
