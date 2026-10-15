@@ -8,6 +8,7 @@
 </head>
 <body>
   <button id="theme-toggle" type="button" aria-pressed="false">Modo claro</button>
+  <button id="mute-toggle" type="button" aria-pressed="false">Sonido: on</button>
 
   <h1 class="title">TETRIS</h1>
 
@@ -16,6 +17,18 @@
       <canvas id="board" width="300" height="600"></canvas>
 
       <aside class="panel">
+        <div class="panel-section">
+          <label class="label" for="mode-select">MODO</label>
+          <select id="mode-select">
+            <option value="classic">Clásico</option>
+            <option value="sprint">Sprint: 40 líneas / 2 min</option>
+            <option value="garbage">Basura cada 10s</option>
+            <option value="preset">Obstáculos</option>
+            <option value="ghost">Piezas invisibles</option>
+            <option value="reverse">Rotación inversa</option>
+          </select>
+          <span class="challenge hidden" id="challenge-info"></span>
+        </div>
         <div class="panel-section">
           <span class="label">SCORE</span>
           <span class="value" id="score">0</span>
@@ -27,6 +40,11 @@
         <div class="panel-section">
           <span class="label">LEVEL</span>
           <span class="value" id="level">1</span>
+        </div>
+
+        <div class="panel-section">
+          <span class="label">HOLD</span>
+          <canvas id="hold-canvas" width="120" height="120"></canvas>
         </div>
 
         <div class="panel-section">
@@ -48,6 +66,7 @@
           <span class="label">HOLD</span>
           <canvas id="hold-canvas" width="120" height="120" aria-label="Pieza reservada"></canvas>
           <canvas id="peek-canvas" class="hidden" width="48" height="240" aria-label="Siguientes 5 piezas"></canvas>
+          <span class="combo hidden" id="combo" role="status" aria-live="polite"></span>
         </div>
 
         <div class="panel-section controls">
@@ -59,6 +78,7 @@
             <li><kbd>Space</kbd> caída</li>
             <li><kbd>E</kbd> habilidad (barra llena)</li>
             <li><kbd>1</kbd>–<kbd>5</kbd> elegir · <kbd>Esc</kbd> cancelar</li>
+            <li><kbd>C</kbd> / <kbd>Shift</kbd> reservar</li>
             <li><kbd>P</kbd> pausa</li>
           </ul>
         </div>
