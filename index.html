@@ -8,6 +8,7 @@
 </head>
 <body>
   <button id="theme-toggle" type="button" aria-pressed="false">Modo claro</button>
+  <button id="mute-toggle" type="button" aria-pressed="false">Sonido: on</button>
 
   <h1 class="title">TETRIS</h1>
 
@@ -33,6 +34,10 @@
           <span class="label">NEXT</span>
           <canvas id="next-canvas" width="120" height="120"></canvas>
           <span class="freeze hidden" id="freeze-indicator"></span>
+        </div>
+
+        <div class="panel-section">
+          <span class="combo hidden" id="combo" role="status" aria-live="polite"></span>
         </div>
 
         <div class="panel-section controls">

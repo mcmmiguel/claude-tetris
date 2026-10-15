@@ -118,6 +118,12 @@ Contiene toda la lógica del juego. A grandes rasgos:
 - **Game loop** (`loop`): basado en `requestAnimationFrame`, acumula el tiempo transcurrido y baja la pieza una fila cuando se supera `dropInterval`.
 - **Limpieza de líneas** (`clearLines`): recorre el tablero de abajo hacia arriba; cada fila completa se elimina y se inserta una vacía en la cima.
 - **Puntuación**: usa la tabla clásica `[0, 100, 300, 500, 800]` multiplicada por el nivel actual; el hard drop suma 2 puntos por celda recorrida y el soft drop 1 punto por fila.
+- **Combo y bonus** (`clearLines`, `detectTSpin`), todos multiplicados por el nivel:
+  - **Combo**: limpiar líneas en piezas consecutivas suma `50 × combo` (x2, x3, x4…); una pieza sin líneas lo reinicia.
+  - **T-spin**: pieza T rotada por última acción con ≥3 esquinas del cuadro 3×3 ocupadas (paredes y suelo cuentan). Tabla 400 / 800 / 1200 / 1600 para 0 / 1 / 2 / 3 líneas.
+  - **B2B**: Tetris o T-spin con líneas justo después de otro igual multiplica la base por 1.5. Las limpiezas de 1 a 3 líneas lo rompen; las piezas sin líneas lo conservan.
+  - **Perfect Clear**: tablero vacío tras limpiar, +1000.
+  - Efectos: mensaje animado en el panel (respeta `prefers-reduced-motion`) y tonos Web Audio crecientes con el combo; el botón "Sonido" los silencia.
 - **Nivel y velocidad**: el nivel sube cada 10 líneas; la velocidad de caída se calcula como `max(100, 1000 − (level − 1) × 90)` milisegundos.
 - **Ghost piece** (`ghostY`): proyecta la posición final de la pieza actual hacia abajo y la dibuja con `globalAlpha = 0.2`.
 

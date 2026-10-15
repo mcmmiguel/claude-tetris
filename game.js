@@ -34,6 +34,11 @@ const PIECES = [
 ];
 
 const LINE_SCORES = [0, 100, 300, 500, 800];
+const TSPIN_SCORES = [400, 800, 1200, 1600]; // T-spin con 0/1/2/3 líneas
+const COMBO_BONUS = 50;           // puntos por nivel de combo (× level)
+const B2B_MULTIPLIER = 1.5;       // Tetris / T-spin consecutivos
+const PERFECT_CLEAR_BONUS = 1000; // × level
+const EFFECT_MS = 1200;           // duración del mensaje de efecto
 const NUT_CHANCE = 0.05; // probabilidad de que salga la tuerca (pieza reto)
 const POWERUP_EVERY_LINES = 10; // cada cuántas líneas aparece un power-up
 const FREEZE_MS = 5000;         // duración del power-up Congelar
@@ -55,9 +60,14 @@ const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeBtn = document.getElementById('theme-toggle');
 const freezeEl = document.getElementById('freeze-indicator');
+const comboEl = document.getElementById('combo');
+const muteBtn = document.getElementById('mute-toggle');
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let nextPowerupAt, powerupPending, freezeRemaining;
+let combo, backToBack, lastMoveWasRotation, effectTimer;
+let audioCtx = null;
+let muted = false;
 let gridColor, highlightColor;
 
 function createBoard() {
@@ -106,6 +116,7 @@ function tryRotate() {
     if (!collide(rotated, current.x + kick, current.y)) {
       current.shape = rotated;
       current.x += kick;
+      lastMoveWasRotation = true;
       return;
     }
   }
@@ -118,7 +129,19 @@ function merge() {
         board[current.y + r][current.x + c] = current.shape[r][c];
 }
 
-function clearLines() {
+// T-spin: pieza T, última acción una rotación y al menos 3 de las 4 esquinas
+// del cuadro 3x3 ocupadas (paredes y suelo cuentan como ocupados)
+function detectTSpin() {
+  if (current.type !== 3 || !lastMoveWasRotation) return false;
+  let filled = 0;
+  for (const [dy, dx] of [[0, 0], [0, 2], [2, 0], [2, 2]]) {
+    const x = current.x + dx, y = current.y + dy;
+    if (x < 0 || x >= COLS || y >= ROWS || (y >= 0 && board[y][x])) filled++;
+  }
+  return filled >= 3;
+}
+
+function clearLines(tSpin) {
   let cleared = 0;
   for (let r = ROWS - 1; r >= 0; r--) {
     if (board[r].every(v => v !== 0)) {
@@ -128,17 +151,79 @@ function clearLines() {
       r++;
     }
   }
+  const labels = [];
   if (cleared) {
+    combo++;
     lines += cleared;
     while (lines >= nextPowerupAt) {
       powerupPending = true;
       nextPowerupAt += POWERUP_EVERY_LINES;
     }
-    score += (LINE_SCORES[cleared] || 0) * level;
+    let base = tSpin ? TSPIN_SCORES[Math.min(cleared, 3)] : (LINE_SCORES[cleared] || 0);
+    const difficult = tSpin || cleared === 4;
+    if (difficult && backToBack) {
+      base = Math.floor(base * B2B_MULTIPLIER);
+      labels.push('B2B');
+    }
+    backToBack = difficult;
+    if (tSpin) labels.push('T-SPIN');
+    if (cleared === 4) labels.push('TETRIS');
+    score += base * level;
+    if (combo > 0) {
+      score += COMBO_BONUS * combo * level;
+      labels.push(`COMBO x${combo + 1}`);
+    }
+    // el Perfect Clear se evalúa después de eliminar las filas
+    if (board.every(row => row.every(v => v === 0))) {
+      score += PERFECT_CLEAR_BONUS * level;
+      labels.push('PERFECT CLEAR');
+    }
     level = Math.floor(lines / 10) + 1;
     dropInterval = Math.max(100, 1000 - (level - 1) * 90);
+    showEffect(labels, combo);
     updateHUD();
+  } else {
+    // sin líneas: rompe el combo pero conserva el B2B
+    combo = -1;
+    if (tSpin) {
+      score += TSPIN_SCORES[0] * level;
+      showEffect(['T-SPIN'], 0);
+      updateHUD();
+    }
   }
+}
+
+function playTone(freq, duration, delay = 0) {
+  if (muted) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const t = audioCtx.currentTime + delay;
+    osc.type = 'square';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.06, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + duration);
+  } catch (e) { /* audio no disponible: el juego sigue sin sonido */ }
+}
+
+function showEffect(labels, comboCount) {
+  comboEl.textContent = labels.join(' · ');
+  comboEl.classList.remove('hidden', 'pop');
+  void comboEl.offsetWidth; // reinicia la animación
+  comboEl.classList.add('pop');
+  clearTimeout(effectTimer);
+  effectTimer = setTimeout(() => comboEl.classList.add('hidden'), EFFECT_MS);
+  // tono creciente según el combo
+  const base = 440 * Math.pow(2, Math.min(Math.max(comboCount, 0), 12) / 12);
+  playTone(base, 0.12);
+  if (labels.length > 1 || comboCount > 0) playTone(base * 1.5, 0.15, 0.1);
+  if (labels.includes('PERFECT CLEAR')) playTone(base * 2, 0.3, 0.2);
 }
 
 function ghostY() {
@@ -157,6 +242,7 @@ function hardDrop() {
 function softDrop() {
   if (!collide(current.shape, current.x, current.y + 1)) {
     current.y++;
+    lastMoveWasRotation = false;
     score += 1;
     updateHUD();
   } else {
@@ -204,9 +290,13 @@ function updateFreezeIndicator() {
 }
 
 function lockPiece() {
+  let tSpin = false;
   if (current.powerup) applyPowerup(current);
-  else merge();
-  clearLines();
+  else {
+    tSpin = detectTSpin();
+    merge();
+  }
+  clearLines(tSpin);
   spawn();
 }
 
@@ -356,6 +446,7 @@ function loop(ts) {
     dropAccum = 0;
     if (!collide(current.shape, current.x, current.y + 1)) {
       current.y++;
+      lastMoveWasRotation = false;
     } else {
       lockPiece();
     }
@@ -379,6 +470,11 @@ function init() {
   nextPowerupAt = POWERUP_EVERY_LINES;
   powerupPending = false;
   freezeRemaining = 0;
+  combo = -1;
+  backToBack = false;
+  lastMoveWasRotation = false;
+  clearTimeout(effectTimer);
+  comboEl.classList.add('hidden');
   updateFreezeIndicator();
   lastTime = performance.now();
   next = randomPiece();
@@ -394,10 +490,10 @@ document.addEventListener('keydown', e => {
   if (paused || gameOver) return;
   switch (e.code) {
     case 'ArrowLeft':
-      if (!collide(current.shape, current.x - 1, current.y)) current.x--;
+      if (!collide(current.shape, current.x - 1, current.y)) { current.x--; lastMoveWasRotation = false; }
       break;
     case 'ArrowRight':
-      if (!collide(current.shape, current.x + 1, current.y)) current.x++;
+      if (!collide(current.shape, current.x + 1, current.y)) { current.x++; lastMoveWasRotation = false; }
       break;
     case 'ArrowDown':
       softDrop();
@@ -415,6 +511,13 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+muteBtn.addEventListener('click', () => {
+  muted = !muted;
+  muteBtn.textContent = muted ? 'Sonido: off' : 'Sonido: on';
+  muteBtn.setAttribute('aria-pressed', String(muted));
+  muteBtn.blur(); // evita que Space/Enter vuelvan a activar el botón
+});
 
 themeBtn.addEventListener('click', () => {
   applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
