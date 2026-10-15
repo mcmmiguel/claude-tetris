@@ -42,6 +42,18 @@ const POWERUP_ICONS = { bomb: '💣', lightning: '⚡', dye: '🎨', gravity: '�
 // depuración: index.html?powerup=bomb fuerza el tipo de power-up
 const FORCED_POWERUP = new URLSearchParams(location.search).get('powerup');
 
+// modos de desafío; 'classic' es el modo infinito original
+const CHALLENGES = {
+  classic: { name: 'Clásico' },
+  sprint:  { name: 'Sprint', goalLines: 40, timeLimit: 120000, goal: 'Limpia 40 líneas en 2:00' },
+  garbage: { name: 'Basura', garbageEvery: 10000, goal: 'Sobrevive: sube basura cada 10s' },
+  preset:  { name: 'Obstáculos', presetRows: 6, goal: 'Tablero con bloques fijos' },
+  ghost:   { name: 'Invisibles', hideLocked: true, goal: 'Las piezas se ocultan al caer' },
+  reverse: { name: 'Inversa', reverseFromLevel: 5, goal: 'Rotación inversa desde nivel 5' },
+};
+const GARBAGE_COLOR = 8;
+const REVEAL_MS = 700; // en "Invisibles", tiempo que se ve el tablero tras fijar una pieza
+
 const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 const nextCanvas = document.getElementById('next-canvas');
@@ -55,13 +67,46 @@ const overlayScore = document.getElementById('overlay-score');
 const restartBtn = document.getElementById('restart-btn');
 const themeBtn = document.getElementById('theme-toggle');
 const freezeEl = document.getElementById('freeze-indicator');
+const modeSelect = document.getElementById('mode-select');
+const challengeEl = document.getElementById('challenge-info');
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let nextPowerupAt, powerupPending, freezeRemaining;
+let challenge, elapsed, garbageTimer, revealRemaining;
 let gridColor, highlightColor;
 
 function createBoard() {
-  return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
+  const b = Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
+  if (challenge.presetRows) {
+    for (let r = ROWS - challenge.presetRows; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++)
+        if (Math.random() < 0.6) b[r][c] = Math.floor(Math.random() * 7) + 1;
+      // nunca una línea completa desde el inicio
+      if (b[r].every(v => v !== 0)) b[r][Math.floor(Math.random() * COLS)] = 0;
+    }
+  }
+  return b;
+}
+
+function addGarbageRow() {
+  const overflow = board[0].some(v => v !== 0);
+  board.shift();
+  const row = new Array(COLS).fill(GARBAGE_COLOR);
+  row[Math.floor(Math.random() * COLS)] = 0;
+  board.push(row);
+  if (overflow) { endGame(); return; }
+  // la pieza activa sube si la basura la alcanza
+  while (current.y > 0 && collide(current.shape, current.x, current.y)) current.y--;
+  if (collide(current.shape, current.x, current.y)) endGame();
+}
+
+function formatTime(ms) {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
+function reverseActive() {
+  return challenge.reverseFromLevel && level >= challenge.reverseFromLevel;
 }
 
 function randomPiece() {
@@ -99,8 +144,12 @@ function rotateCW(shape) {
   return result;
 }
 
+function rotateCCW(shape) {
+  return rotateCW(rotateCW(rotateCW(shape)));
+}
+
 function tryRotate() {
-  const rotated = rotateCW(current.shape);
+  const rotated = reverseActive() ? rotateCCW(current.shape) : rotateCW(current.shape);
   const kicks = [0, -1, 1, -2, 2];
   for (const kick of kicks) {
     if (!collide(rotated, current.x + kick, current.y)) {
@@ -138,6 +187,7 @@ function clearLines() {
     level = Math.floor(lines / 10) + 1;
     dropInterval = Math.max(100, 1000 - (level - 1) * 90);
     updateHUD();
+    if (challenge.goalLines && lines >= challenge.goalLines) endGame(true);
   }
 }
 
@@ -206,7 +256,9 @@ function updateFreezeIndicator() {
 function lockPiece() {
   if (current.powerup) applyPowerup(current);
   else merge();
+  if (challenge.hideLocked) revealRemaining = REVEAL_MS;
   clearLines();
+  if (gameOver) return;
   spawn();
 }
 
@@ -245,6 +297,21 @@ function updateHUD() {
   scoreEl.textContent = score.toLocaleString();
   linesEl.textContent = lines;
   levelEl.textContent = level;
+  updateChallengeInfo();
+}
+
+function updateChallengeInfo() {
+  const parts = [];
+  if (challenge.goal) parts.push(challenge.goal);
+  if (challenge.goalLines) {
+    parts.push(`Faltan ${Math.max(0, challenge.goalLines - lines)} líneas`);
+    parts.push(`Tiempo: ${formatTime(challenge.timeLimit - elapsed)}`);
+  } else if (challenge.id !== 'classic') {
+    parts.push(`Tiempo: ${formatTime(elapsed)}`);
+  }
+  if (reverseActive()) parts.push('¡Rotación invertida!');
+  challengeEl.textContent = parts.join(' · ');
+  challengeEl.classList.toggle('hidden', challenge.id === 'classic');
 }
 
 function drawBlock(context, x, y, colorIndex, size, alpha, icon) {
@@ -288,9 +355,10 @@ function draw() {
   drawGrid();
 
   // board
-  for (let r = 0; r < ROWS; r++)
-    for (let c = 0; c < COLS; c++)
-      drawBlock(ctx, c, r, board[r][c], BLOCK);
+  if (!challenge.hideLocked || revealRemaining > 0)
+    for (let r = 0; r < ROWS; r++)
+      for (let c = 0; c < COLS; c++)
+        drawBlock(ctx, c, r, board[r][c], BLOCK);
 
   // en game over la pieza actual no cupo: no dibujarla encima del tablero
   if (gameOver) return;
@@ -319,10 +387,10 @@ function drawNext() {
       drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NB, 1, next.powerup && POWERUP_ICONS[next.powerup]);
 }
 
-function endGame() {
+function endGame(won = false) {
   gameOver = true;
   cancelAnimationFrame(animId);
-  overlayTitle.textContent = 'GAME OVER';
+  overlayTitle.textContent = won ? '¡DESAFÍO COMPLETADO!' : 'GAME OVER';
   overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
   overlay.classList.remove('hidden');
 }
@@ -345,6 +413,24 @@ function loop(ts) {
   if (gameOver || paused) return;
   const dt = ts - lastTime;
   lastTime = ts;
+  elapsed += dt;
+  if (revealRemaining > 0) revealRemaining -= dt;
+  if (challenge.goalLines && elapsed >= challenge.timeLimit) {
+    elapsed = challenge.timeLimit;
+    updateChallengeInfo();
+    draw();
+    endGame();
+    return;
+  }
+  if (challenge.garbageEvery) {
+    garbageTimer += dt;
+    if (garbageTimer >= challenge.garbageEvery) {
+      garbageTimer -= challenge.garbageEvery;
+      addGarbageRow();
+      if (gameOver) { draw(); return; }
+    }
+  }
+  updateChallengeInfo();
   if (freezeRemaining > 0) {
     // el tiempo se descuenta por frame, así que la pausa no lo consume
     freezeRemaining = Math.max(0, freezeRemaining - dt);
@@ -368,6 +454,11 @@ function loop(ts) {
 }
 
 function init() {
+  const id = CHALLENGES[modeSelect.value] ? modeSelect.value : 'classic';
+  challenge = { id, ...CHALLENGES[id] };
+  elapsed = 0;
+  garbageTimer = 0;
+  revealRemaining = 0;
   board = createBoard();
   score = 0;
   lines = 0;
@@ -415,6 +506,11 @@ document.addEventListener('keydown', e => {
 });
 
 restartBtn.addEventListener('click', init);
+
+modeSelect.addEventListener('change', () => {
+  modeSelect.blur(); // evita que las flechas cambien el modo durante la partida
+  init();
+});
 
 themeBtn.addEventListener('click', () => {
   applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
