@@ -211,6 +211,12 @@ Algunos parámetros fáciles de tunear en `game.js`:
 
 ---
 
+## Tabla de récords
+
+Al abrir el juego aparece una pantalla de inicio con el **Top 5** local (nombre, puntos, líneas y modo), el mejor combo y las líneas máximas conseguidas. Si una partida entra en el top, el overlay de game over pide el nombre del jugador (máx. 12 caracteres; Enter guarda) y resalta la nueva fila. Los datos se guardan en `localStorage` bajo la clave `tetris-records` y pueden borrarse con el botón **Resetear récords**.
+
+---
+
 ## Licencia
 
 Proyecto de uso libre con fines educativos y de práctica.
