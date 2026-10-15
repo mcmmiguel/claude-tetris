@@ -327,6 +327,8 @@ kbd {
   min-height: 1.2em;
   font-size: 13px;
   color: var(--danger);
+}
+
 /* ---- Combo / bonus ---- */
 .combo {
   font-family: 'Courier New', Courier, monospace;
