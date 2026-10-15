@@ -36,6 +36,7 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - Tablero de **10 × 20** celdas.
 - Las **7 piezas estándar** (I, O, T, S, Z, J, L) con colores diferenciados.
 - Una **pieza reto, la Tuerca**: un anillo 3×3 con el centro vacío que aparece con poca frecuencia (~5%).
+- **Power-ups**: cada 10 líneas la siguiente pieza es una pieza especial 1×1 que se activa al aterrizar: 💣 Bomba (área 3×3), ⚡ Rayo (limpia su fila), 🎨 Tinte (los bloques del color sobre el que cae pasan a comodín), ⬇ Gravedad (compacta huecos) y ❄ Congelar (pausa la caída 5 s). Para probar uno, abre `index.html?powerup=bomb` (`bomb`, `lightning`, `dye`, `gravity`, `freeze`).
 - **Rotación** con _wall kicks_ básicos (pequeños desplazamientos para que la pieza pueda rotar pegada a la pared).
 - **Soft drop** (bajada acelerada) y **hard drop** (caída instantánea).
 - **Pieza fantasma** (_ghost piece_): muestra dónde aterrizará la pieza actual.
@@ -177,6 +178,8 @@ Algunos parámetros fáciles de tunear en `game.js`:
 | `BLOCK`        | Tamaño en píxeles de cada celda          | `30`                  |
 | `COLORS`       | Paleta de colores por tipo de pieza      | 8 colores             |
 | `NUT_CHANCE`   | Probabilidad de que salga la Tuerca      | `0.05`                |
+| `POWERUP_EVERY_LINES` | Líneas entre power-ups             | `10`                  |
+| `FREEZE_MS`    | Duración de Congelar en ms               | `5000`                |
 | `LINE_SCORES`  | Puntos por 1, 2, 3 o 4 líneas eliminadas | `[0,100,300,500,800]` |
 | `dropInterval` | Velocidad inicial de caída en ms         | `1000`                |
 
