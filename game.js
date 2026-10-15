@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 const COLS = 10;
 const ROWS = 20;
@@ -6,20 +6,20 @@ const BLOCK = 30;
 
 const COLORS = [
   null,
-  '#4dd0e1', // I - cyan
-  '#ffd54f', // O - yellow
-  '#ba68c8', // T - purple
-  '#81c784', // S - green
-  '#e57373', // Z - red
-  '#90caf9', // J - light blue
-  '#ffb74d', // L - orange
-  '#b0bec5', // N - nut (tuerca), gris metálico
-  '#fff176', // power-up (pieza especial)
-  '#f06292', // comodín (resultado del Tinte)
-  '#4db6ac', // + - pentominó cruz, teal
-  '#9575cd', // U - pentominó, violeta
-  '#ff8a65', // Y - pentominó, coral
-  '#aed581', // single 1×1 (recompensa tras un Tetris)
+  "#4dd0e1", // I - cyan
+  "#ffd54f", // O - yellow
+  "#ba68c8", // T - purple
+  "#81c784", // S - green
+  "#e57373", // Z - red
+  "#90caf9", // J - light blue
+  "#ffb74d", // L - orange
+  "#b0bec5", // N - nut (tuerca), gris metálico
+  "#fff176", // power-up (pieza especial)
+  "#f06292", // comodín (resultado del Tinte)
+  "#4db6ac", // + - pentominó cruz, teal
+  "#9575cd", // U - pentominó, violeta
+  "#ff8a65", // Y - pentominó, coral
+  "#aed581", // single 1×1 (recompensa tras un Tetris)
 ];
 const POWERUP_TYPE = 9;
 const WILDCARD = 10;
@@ -27,77 +27,145 @@ const SINGLE_TYPE = 14;
 
 const PIECES = [
   null,
-  [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], // I
-  [[2,2],[2,2]],                               // O
-  [[0,3,0],[3,3,3],[0,0,0]],                  // T
-  [[0,4,4],[4,4,0],[0,0,0]],                  // S
-  [[5,5,0],[0,5,5],[0,0,0]],                  // Z
-  [[6,0,0],[6,6,6],[0,0,0]],                  // J
-  [[0,0,7],[7,7,7],[0,0,0]],                  // L
-  [[8,8,8],[8,0,8],[8,8,8]],                  // N - tuerca (centro vacío)
-  [[9]],                                       // power-up (1×1)
-  [[0,11,0],[11,11,11],[0,11,0]],             // + - pentominó cruz
-  [[12,0,12],[12,12,12],[0,0,0]],             // U - pentominó
-  [[0,13,0,0],[13,13,13,13],[0,0,0,0],[0,0,0,0]], // Y - pentominó
-  [[14]],                                      // single 1×1 (recompensa)
+  [
+    [0, 0, 0, 0],
+    [1, 1, 1, 1],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+  ], // I
+  [
+    [2, 2],
+    [2, 2],
+  ], // O
+  [
+    [0, 3, 0],
+    [3, 3, 3],
+    [0, 0, 0],
+  ], // T
+  [
+    [0, 4, 4],
+    [4, 4, 0],
+    [0, 0, 0],
+  ], // S
+  [
+    [5, 5, 0],
+    [0, 5, 5],
+    [0, 0, 0],
+  ], // Z
+  [
+    [6, 0, 0],
+    [6, 6, 6],
+    [0, 0, 0],
+  ], // J
+  [
+    [0, 0, 7],
+    [7, 7, 7],
+    [0, 0, 0],
+  ], // L
+  [
+    [8, 8, 8],
+    [8, 0, 8],
+    [8, 8, 8],
+  ], // N - tuerca (centro vacío)
+  [[9]], // power-up (1×1)
+  [
+    [0, 11, 0],
+    [11, 11, 11],
+    [0, 11, 0],
+  ], // + - pentominó cruz
+  [
+    [12, 0, 12],
+    [12, 12, 12],
+    [0, 0, 0],
+  ], // U - pentominó
+  [
+    [0, 13, 0, 0],
+    [13, 13, 13, 13],
+    [0, 0, 0, 0],
+    [0, 0, 0, 0],
+  ], // Y - pentominó
+  [[14]], // single 1×1 (recompensa)
 ];
 
 const LINE_SCORES = [0, 100, 300, 500, 800];
+const TSPIN_SCORES = [400, 800, 1200, 1600]; // T-spin con 0/1/2/3 líneas
+const COMBO_BONUS = 50; // puntos por nivel de combo (× level)
+const B2B_MULTIPLIER = 1.5; // Tetris / T-spin consecutivos
+const PERFECT_CLEAR_BONUS = 1000; // × level
+const EFFECT_MS = 1200; // duración del mensaje de efecto
 const NUT_CHANCE = 0.05; // probabilidad de que salga la tuerca (pieza reto)
 // probabilidad de cada pentominó (tipo → probabilidad); el resto del sorteo son las 7 estándar
 const PENTOMINO_CHANCE = { 11: 0.03, 12: 0.03, 13: 0.03 };
 const POWERUP_EVERY_LINES = 10; // cada cuántas líneas aparece un power-up
-const FREEZE_MS = 5000;         // duración del power-up Congelar
-const POWERUPS = ['bomb', 'lightning', 'dye', 'gravity', 'freeze'];
-const POWERUP_ICONS = { bomb: '💣', lightning: '⚡', dye: '🎨', gravity: '⬇', freeze: '❄' };
+const FREEZE_MS = 5000; // duración del power-up Congelar
+const POWERUPS = ["bomb", "lightning", "dye", "gravity", "freeze"];
+const POWERUP_ICONS = { bomb: "💣", lightning: "⚡", dye: "🎨", gravity: "⬇", freeze: "❄" };
 // depuración: index.html?powerup=bomb fuerza el tipo de power-up
-const FORCED_POWERUP = new URLSearchParams(location.search).get('powerup');
+const FORCED_POWERUP = new URLSearchParams(location.search).get("powerup");
 
-const canvas = document.getElementById('board');
-const ctx = canvas.getContext('2d');
-const nextCanvas = document.getElementById('next-canvas');
-const nextCtx = nextCanvas.getContext('2d');
-const scoreEl = document.getElementById('score');
-const linesEl = document.getElementById('lines');
-const levelEl = document.getElementById('level');
-const overlay = document.getElementById('overlay');
-const overlayTitle = document.getElementById('overlay-title');
-const overlayScore = document.getElementById('overlay-score');
-const restartBtn = document.getElementById('restart-btn');
-const themeBtn = document.getElementById('theme-toggle');
-const freezeEl = document.getElementById('freeze-indicator');
+const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
+const nextCanvas = document.getElementById("next-canvas");
+const nextCtx = nextCanvas.getContext("2d");
+const holdCanvas = document.getElementById("hold-canvas");
+const holdCtx = holdCanvas.getContext("2d");
+const scoreEl = document.getElementById("score");
+const linesEl = document.getElementById("lines");
+const levelEl = document.getElementById("level");
+const overlay = document.getElementById("overlay");
+const overlayTitle = document.getElementById("overlay-title");
+const overlayScore = document.getElementById("overlay-score");
+const restartBtn = document.getElementById("restart-btn");
+const themeBtn = document.getElementById("theme-toggle");
+const freezeEl = document.getElementById("freeze-indicator");
+const comboEl = document.getElementById("combo");
+const muteBtn = document.getElementById("mute-toggle");
 
-let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
-let nextPowerupAt, powerupPending, singlePending, freezeRemaining;
+let board, current, next, held, holdUsed, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
+let nextPowerupAt, powerupPending, freezeRemaining;
+let combo, backToBack, lastMoveWasRotation, effectTimer;
+let audioCtx = null;
+let muted = false;
 let gridColor, highlightColor;
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
 }
 
-function rollType() {
-  let roll = Math.random();
-  if (roll < NUT_CHANCE) return 8;
-  roll -= NUT_CHANCE;
-  for (const [type, chance] of Object.entries(PENTOMINO_CHANCE)) {
-    if (roll < chance) return Number(type);
-    roll -= chance;
-  }
-  return Math.floor(Math.random() * 7) + 1;
+// crea una pieza con rotación y posición iniciales (current.shape se muta al rotar)
+function makePiece(type, powerup) {
+  const shape = PIECES[type].map((row) => [...row]);
+  const piece = { type, shape, x: Math.floor(COLS / 2) - Math.floor(shape[0].length / 2), y: 0 };
+  if (powerup) piece.powerup = powerup;
+  return piece;
 }
 
 function randomPiece() {
   if (powerupPending) {
     powerupPending = false;
-    const powerup = POWERUPS.includes(FORCED_POWERUP)
-      ? FORCED_POWERUP
-      : POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
-    return { type: POWERUP_TYPE, powerup, shape: [[POWERUP_TYPE]], x: Math.floor(COLS / 2), y: 0 };
+    const powerup = POWERUPS.includes(FORCED_POWERUP) ? FORCED_POWERUP : POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
+    return makePiece(POWERUP_TYPE, powerup);
   }
-  const type = singlePending ? SINGLE_TYPE : rollType();
-  singlePending = false;
-  const shape = PIECES[type].map(row => [...row]);
-  return { type, shape, x: Math.floor(COLS / 2) - Math.floor(shape[0].length / 2), y: 0 };
+  const type = Math.random() < NUT_CHANCE ? 8 : Math.floor(Math.random() * 7) + 1;
+  return makePiece(type);
+}
+
+function holdPiece() {
+  if (holdUsed) return;
+  const stored = makePiece(current.type, current.powerup);
+  if (held) {
+    if (collide(held.shape, held.x, held.y)) return; // no cabe: rechazar el intercambio
+    current = held;
+  } else {
+    current = next;
+    next = randomPiece();
+    if (collide(current.shape, current.x, current.y)) endGame();
+    drawNext();
+  }
+  held = stored;
+  holdUsed = true;
+  dropAccum = 0;
+  drawHold();
 }
 
 function collide(shape, ox, oy) {
@@ -114,11 +182,10 @@ function collide(shape, ox, oy) {
 }
 
 function rotateCW(shape) {
-  const rows = shape.length, cols = shape[0].length;
+  const rows = shape.length,
+    cols = shape[0].length;
   const result = Array.from({ length: cols }, () => new Array(rows).fill(0));
-  for (let r = 0; r < rows; r++)
-    for (let c = 0; c < cols; c++)
-      result[c][rows - 1 - r] = shape[r][c];
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) result[c][rows - 1 - r] = shape[r][c];
   return result;
 }
 
@@ -129,40 +196,119 @@ function tryRotate() {
     if (!collide(rotated, current.x + kick, current.y)) {
       current.shape = rotated;
       current.x += kick;
+      lastMoveWasRotation = true;
       return;
     }
   }
 }
 
 function merge() {
-  for (let r = 0; r < current.shape.length; r++)
-    for (let c = 0; c < current.shape[r].length; c++)
-      if (current.shape[r][c])
-        board[current.y + r][current.x + c] = current.shape[r][c];
+  for (let r = 0; r < current.shape.length; r++) for (let c = 0; c < current.shape[r].length; c++) if (current.shape[r][c]) board[current.y + r][current.x + c] = current.shape[r][c];
 }
 
-function clearLines() {
+// T-spin: pieza T, última acción una rotación y al menos 3 de las 4 esquinas
+// del cuadro 3x3 ocupadas (paredes y suelo cuentan como ocupados)
+function detectTSpin() {
+  if (current.type !== 3 || !lastMoveWasRotation) return false;
+  let filled = 0;
+  for (const [dy, dx] of [
+    [0, 0],
+    [0, 2],
+    [2, 0],
+    [2, 2],
+  ]) {
+    const x = current.x + dx,
+      y = current.y + dy;
+    if (x < 0 || x >= COLS || y >= ROWS || (y >= 0 && board[y][x])) filled++;
+  }
+  return filled >= 3;
+}
+
+function clearLines(tSpin) {
   let cleared = 0;
   for (let r = ROWS - 1; r >= 0; r--) {
-    if (board[r].every(v => v !== 0)) {
+    if (board[r].every((v) => v !== 0)) {
       board.splice(r, 1);
       board.unshift(new Array(COLS).fill(0));
       cleared++;
       r++;
     }
   }
+  const labels = [];
   if (cleared) {
-    if (cleared === 4) singlePending = true; // recompensa tras un Tetris
+    combo++;
     lines += cleared;
     while (lines >= nextPowerupAt) {
       powerupPending = true;
       nextPowerupAt += POWERUP_EVERY_LINES;
     }
-    score += (LINE_SCORES[cleared] || 0) * level;
+    let base = tSpin ? TSPIN_SCORES[Math.min(cleared, 3)] : LINE_SCORES[cleared] || 0;
+    const difficult = tSpin || cleared === 4;
+    if (difficult && backToBack) {
+      base = Math.floor(base * B2B_MULTIPLIER);
+      labels.push("B2B");
+    }
+    backToBack = difficult;
+    if (tSpin) labels.push("T-SPIN");
+    if (cleared === 4) labels.push("TETRIS");
+    score += base * level;
+    if (combo > 0) {
+      score += COMBO_BONUS * combo * level;
+      labels.push(`COMBO x${combo + 1}`);
+    }
+    // el Perfect Clear se evalúa después de eliminar las filas
+    if (board.every((row) => row.every((v) => v === 0))) {
+      score += PERFECT_CLEAR_BONUS * level;
+      labels.push("PERFECT CLEAR");
+    }
     level = Math.floor(lines / 10) + 1;
     dropInterval = Math.max(100, 1000 - (level - 1) * 90);
+    showEffect(labels, combo);
     updateHUD();
+  } else {
+    // sin líneas: rompe el combo pero conserva el B2B
+    combo = -1;
+    if (tSpin) {
+      score += TSPIN_SCORES[0] * level;
+      showEffect(["T-SPIN"], 0);
+      updateHUD();
+    }
   }
+}
+
+function playTone(freq, duration, delay = 0) {
+  if (muted) return;
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const t = audioCtx.currentTime + delay;
+    osc.type = "square";
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.06, t);
+    gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start(t);
+    osc.stop(t + duration);
+  } catch (e) {
+    /* audio no disponible: el juego sigue sin sonido */
+  }
+}
+
+function showEffect(labels, comboCount) {
+  comboEl.textContent = labels.join(" · ");
+  comboEl.classList.remove("hidden", "pop");
+  void comboEl.offsetWidth; // reinicia la animación
+  comboEl.classList.add("pop");
+  clearTimeout(effectTimer);
+  effectTimer = setTimeout(() => comboEl.classList.add("hidden"), EFFECT_MS);
+  // tono creciente según el combo
+  const base = 440 * Math.pow(2, Math.min(Math.max(comboCount, 0), 12) / 12);
+  playTone(base, 0.12);
+  if (labels.length > 1 || comboCount > 0) playTone(base * 1.5, 0.15, 0.1);
+  if (labels.includes("PERFECT CLEAR")) playTone(base * 2, 0.3, 0.2);
 }
 
 function ghostY() {
@@ -181,6 +327,7 @@ function hardDrop() {
 function softDrop() {
   if (!collide(current.shape, current.x, current.y + 1)) {
     current.y++;
+    lastMoveWasRotation = false;
     score += 1;
     updateHUD();
   } else {
@@ -189,33 +336,29 @@ function softDrop() {
 }
 
 function applyPowerup(piece) {
-  const px = piece.x, py = piece.y;
+  const px = piece.x,
+    py = piece.y;
   switch (piece.powerup) {
-    case 'bomb':
-      for (let r = py - 1; r <= py + 1; r++)
-        for (let c = px - 1; c <= px + 1; c++)
-          if (r >= 0 && r < ROWS && c >= 0 && c < COLS) board[r][c] = 0;
+    case "bomb":
+      for (let r = py - 1; r <= py + 1; r++) for (let c = px - 1; c <= px + 1; c++) if (r >= 0 && r < ROWS && c >= 0 && c < COLS) board[r][c] = 0;
       break;
-    case 'lightning':
+    case "lightning":
       board[py].fill(0);
       break;
-    case 'dye': {
+    case "dye": {
       // tiñe el color del bloque sobre el que aterrizó; sin bloque debajo no hace nada
       const target = py + 1 < ROWS ? board[py + 1][px] : 0;
-      if (target && target !== WILDCARD)
-        for (const row of board)
-          for (let c = 0; c < COLS; c++)
-            if (row[c] === target) row[c] = WILDCARD;
+      if (target && target !== WILDCARD) for (const row of board) for (let c = 0; c < COLS; c++) if (row[c] === target) row[c] = WILDCARD;
       break;
     }
-    case 'gravity':
+    case "gravity":
       for (let c = 0; c < COLS; c++) {
         const col = [];
         for (let r = 0; r < ROWS; r++) if (board[r][c]) col.push(board[r][c]);
         for (let r = ROWS - 1; r >= 0; r--) board[r][c] = col.pop() || 0;
       }
       break;
-    case 'freeze':
+    case "freeze":
       freezeRemaining = FREEZE_MS;
       updateFreezeIndicator();
       break;
@@ -223,45 +366,59 @@ function applyPowerup(piece) {
 }
 
 function updateFreezeIndicator() {
-  freezeEl.classList.toggle('hidden', freezeRemaining <= 0);
+  freezeEl.classList.toggle("hidden", freezeRemaining <= 0);
   freezeEl.textContent = `❄ ${Math.ceil(freezeRemaining / 1000)}s`;
 }
 
 function lockPiece() {
+  let tSpin = false;
   if (current.powerup) applyPowerup(current);
-  else merge();
-  clearLines();
+  else {
+    tSpin = detectTSpin();
+    merge();
+  }
+  clearLines(tSpin);
   spawn();
 }
 
 function spawn() {
+  holdUsed = false;
   current = next;
   next = randomPiece();
   if (collide(current.shape, current.x, current.y)) {
     endGame();
   }
   drawNext();
+  drawHold();
 }
 
 function applyTheme(theme) {
   const root = document.documentElement;
   root.dataset.theme = theme;
   const styles = getComputedStyle(root);
-  gridColor = styles.getPropertyValue('--grid').trim();
-  highlightColor = styles.getPropertyValue('--highlight').trim();
-  const isLight = theme === 'light';
-  themeBtn.textContent = isLight ? 'Modo oscuro' : 'Modo claro';
-  themeBtn.setAttribute('aria-pressed', String(isLight));
-  try { localStorage.setItem('theme', theme); } catch (e) { /* almacenamiento no disponible */ }
+  gridColor = styles.getPropertyValue("--grid").trim();
+  highlightColor = styles.getPropertyValue("--highlight").trim();
+  const isLight = theme === "light";
+  themeBtn.textContent = isLight ? "Modo oscuro" : "Modo claro";
+  themeBtn.setAttribute("aria-pressed", String(isLight));
+  try {
+    localStorage.setItem("theme", theme);
+  } catch (e) {
+    /* almacenamiento no disponible */
+  }
   // el loop se detiene en pausa y game over: repintar manualmente
-  if (current && next) { draw(); drawNext(); }
+  if (current && next) {
+    draw();
+    drawNext();
+    drawHold();
+  }
 }
 
 function loadTheme() {
   try {
-    return localStorage.getItem('theme') === 'light' ? 'light' : 'dark';
+    return localStorage.getItem("theme") === "light" ? "light" : "dark";
   } catch (e) {
-    return 'dark';
+    return "dark";
   }
 }
 
@@ -281,10 +438,10 @@ function drawBlock(context, x, y, colorIndex, size, alpha, icon) {
   context.fillStyle = highlightColor;
   context.fillRect(x * size + 1, y * size + 1, size - 2, 4);
   if (icon) {
-    context.fillStyle = '#000';
+    context.fillStyle = "#000";
     context.font = `${size * 0.6}px sans-serif`;
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
+    context.textAlign = "center";
+    context.textBaseline = "middle";
     context.fillText(icon, x * size + size / 2, y * size + size / 2 + 1);
   }
   context.globalAlpha = 1;
@@ -312,9 +469,7 @@ function draw() {
   drawGrid();
 
   // board
-  for (let r = 0; r < ROWS; r++)
-    for (let c = 0; c < COLS; c++)
-      drawBlock(ctx, c, r, board[r][c], BLOCK);
+  for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) drawBlock(ctx, c, r, board[r][c], BLOCK);
 
   // en game over la pieza actual no cupo: no dibujarla encima del tablero
   if (gameOver) return;
@@ -323,32 +478,38 @@ function draw() {
   const gy = ghostY();
   for (let r = 0; r < current.shape.length; r++)
     for (let c = 0; c < current.shape[r].length; c++)
-      if (current.shape[r][c])
-        drawBlock(ctx, current.x + c, gy + r, current.shape[r][c], BLOCK, 0.2, current.powerup && POWERUP_ICONS[current.powerup]);
+      if (current.shape[r][c]) drawBlock(ctx, current.x + c, gy + r, current.shape[r][c], BLOCK, 0.2, current.powerup && POWERUP_ICONS[current.powerup]);
 
   // current piece
   for (let r = 0; r < current.shape.length; r++)
-    for (let c = 0; c < current.shape[r].length; c++)
-      drawBlock(ctx, current.x + c, current.y + r, current.shape[r][c], BLOCK, 1, current.powerup && POWERUP_ICONS[current.powerup]);
+    for (let c = 0; c < current.shape[r].length; c++) drawBlock(ctx, current.x + c, current.y + r, current.shape[r][c], BLOCK, 1, current.powerup && POWERUP_ICONS[current.powerup]);
+}
+
+function drawPreview(context, previewCanvas, piece) {
+  const NB = 30;
+  context.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+  if (!piece) return;
+  const shape = piece.shape;
+  const offX = Math.floor((4 - shape[0].length) / 2);
+  const offY = Math.floor((4 - shape.length) / 2);
+  for (let r = 0; r < shape.length; r++) for (let c = 0; c < shape[r].length; c++) drawBlock(context, offX + c, offY + r, shape[r][c], NB, 1, piece.powerup && POWERUP_ICONS[piece.powerup]);
 }
 
 function drawNext() {
-  const NB = 30;
-  nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-  const shape = next.shape;
-  const offX = Math.floor((4 - shape[0].length) / 2);
-  const offY = Math.floor((4 - shape.length) / 2);
-  for (let r = 0; r < shape.length; r++)
-    for (let c = 0; c < shape[r].length; c++)
-      drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NB, 1, next.powerup && POWERUP_ICONS[next.powerup]);
+  drawPreview(nextCtx, nextCanvas, next);
+}
+
+function drawHold() {
+  holdCanvas.classList.toggle("hold-locked", !!holdUsed);
+  drawPreview(holdCtx, holdCanvas, held);
 }
 
 function endGame() {
   gameOver = true;
   cancelAnimationFrame(animId);
-  overlayTitle.textContent = 'GAME OVER';
+  overlayTitle.textContent = "GAME OVER";
   overlayScore.textContent = `Puntuación: ${score.toLocaleString()}`;
-  overlay.classList.remove('hidden');
+  overlay.classList.remove("hidden");
 }
 
 function togglePause() {
@@ -359,9 +520,9 @@ function togglePause() {
     loop(lastTime);
   } else {
     cancelAnimationFrame(animId);
-    overlayTitle.textContent = 'PAUSA';
-    overlayScore.textContent = '';
-    overlay.classList.remove('hidden');
+    overlayTitle.textContent = "PAUSA";
+    overlayScore.textContent = "";
+    overlay.classList.remove("hidden");
   }
 }
 
@@ -380,6 +541,7 @@ function loop(ts) {
     dropAccum = 0;
     if (!collide(current.shape, current.x, current.y + 1)) {
       current.y++;
+      lastMoveWasRotation = false;
     } else {
       lockPiece();
     }
@@ -400,49 +562,77 @@ function init() {
   gameOver = false;
   dropInterval = 1000;
   dropAccum = 0;
+  held = null;
+  holdUsed = false;
   nextPowerupAt = POWERUP_EVERY_LINES;
   powerupPending = false;
   singlePending = false;
   freezeRemaining = 0;
+  combo = -1;
+  backToBack = false;
+  lastMoveWasRotation = false;
+  clearTimeout(effectTimer);
+  comboEl.classList.add("hidden");
   updateFreezeIndicator();
   lastTime = performance.now();
   next = randomPiece();
   spawn();
   updateHUD();
-  overlay.classList.add('hidden');
+  overlay.classList.add("hidden");
   cancelAnimationFrame(animId);
   animId = requestAnimationFrame(loop);
 }
 
-document.addEventListener('keydown', e => {
-  if (e.code === 'KeyP') { togglePause(); return; }
+document.addEventListener("keydown", (e) => {
+  if (e.code === "KeyP") {
+    togglePause();
+    return;
+  }
   if (paused || gameOver) return;
   switch (e.code) {
-    case 'ArrowLeft':
-      if (!collide(current.shape, current.x - 1, current.y)) current.x--;
+    case "ArrowLeft":
+      if (!collide(current.shape, current.x - 1, current.y)) {
+        current.x--;
+        lastMoveWasRotation = false;
+      }
       break;
-    case 'ArrowRight':
-      if (!collide(current.shape, current.x + 1, current.y)) current.x++;
+    case "ArrowRight":
+      if (!collide(current.shape, current.x + 1, current.y)) {
+        current.x++;
+        lastMoveWasRotation = false;
+      }
       break;
-    case 'ArrowDown':
+    case "ArrowDown":
       softDrop();
       break;
-    case 'ArrowUp':
-    case 'KeyX':
+    case "ArrowUp":
+    case "KeyX":
       tryRotate();
       break;
-    case 'Space':
+    case "Space":
       e.preventDefault();
       hardDrop();
+      break;
+    case "KeyC":
+    case "ShiftLeft":
+    case "ShiftRight":
+      if (!e.repeat) holdPiece();
       break;
   }
   updateHUD();
 });
 
-restartBtn.addEventListener('click', init);
+restartBtn.addEventListener("click", init);
 
-themeBtn.addEventListener('click', () => {
-  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+muteBtn.addEventListener("click", () => {
+  muted = !muted;
+  muteBtn.textContent = muted ? "Sonido: off" : "Sonido: on";
+  muteBtn.setAttribute("aria-pressed", String(muted));
+  muteBtn.blur(); // evita que Space/Enter vuelvan a activar el botón
+});
+
+themeBtn.addEventListener("click", () => {
+  applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
   themeBtn.blur(); // evita que Space/Enter vuelvan a activar el botón
 });
 
