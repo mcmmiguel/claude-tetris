@@ -218,6 +218,9 @@ function draw() {
     for (let c = 0; c < COLS; c++)
       drawBlock(ctx, c, r, board[r][c], BLOCK);
 
+  // en game over la pieza actual no cupo: no dibujarla encima del tablero
+  if (gameOver) return;
+
   // ghost
   const gy = ghostY();
   for (let r = 0; r < current.shape.length; r++)
@@ -265,6 +268,7 @@ function togglePause() {
 }
 
 function loop(ts) {
+  if (gameOver || paused) return;
   const dt = ts - lastTime;
   lastTime = ts;
   dropAccum += dt;
@@ -277,6 +281,9 @@ function loop(ts) {
     }
   }
   draw();
+  // endGame() puede ocurrir dentro de lockPiece(); su cancelAnimationFrame no detiene
+  // el frame en curso, así que no hay que reprogramar el loop
+  if (gameOver) return;
   animId = requestAnimationFrame(loop);
 }
 
