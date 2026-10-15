@@ -404,7 +404,7 @@ function abilityUndo() {
   board = snapshot.board;
   ({ score, lines, level, dropInterval, nextPowerupAt, powerupPending, freezeRemaining } = snapshot);
   // la pieza en juego vuelve al inicio de la cola; la colocada reaparece
-  queue.unshift(current);
+  queue.unshift(makePiece(current.type, current.powerup));
   queue.pop();
   current = placed;
   snapshot = null;
