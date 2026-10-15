@@ -51,6 +51,8 @@ const canvas = document.getElementById('board');
 const ctx = canvas.getContext('2d');
 const nextCanvas = document.getElementById('next-canvas');
 const nextCtx = nextCanvas.getContext('2d');
+const holdCanvas = document.getElementById('hold-canvas');
+const holdCtx = holdCanvas.getContext('2d');
 const scoreEl = document.getElementById('score');
 const linesEl = document.getElementById('lines');
 const levelEl = document.getElementById('level');
@@ -63,7 +65,7 @@ const freezeEl = document.getElementById('freeze-indicator');
 const comboEl = document.getElementById('combo');
 const muteBtn = document.getElementById('mute-toggle');
 
-let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
+let board, current, next, held, holdUsed, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
 let nextPowerupAt, powerupPending, freezeRemaining;
 let combo, backToBack, lastMoveWasRotation, effectTimer;
 let audioCtx = null;
@@ -74,17 +76,42 @@ function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
 }
 
+// crea una pieza con rotación y posición iniciales (current.shape se muta al rotar)
+function makePiece(type, powerup) {
+  const shape = PIECES[type].map(row => [...row]);
+  const piece = { type, shape, x: Math.floor(COLS / 2) - Math.floor(shape[0].length / 2), y: 0 };
+  if (powerup) piece.powerup = powerup;
+  return piece;
+}
+
 function randomPiece() {
   if (powerupPending) {
     powerupPending = false;
     const powerup = POWERUPS.includes(FORCED_POWERUP)
       ? FORCED_POWERUP
       : POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
-    return { type: POWERUP_TYPE, powerup, shape: [[POWERUP_TYPE]], x: Math.floor(COLS / 2), y: 0 };
+    return makePiece(POWERUP_TYPE, powerup);
   }
   const type = Math.random() < NUT_CHANCE ? 8 : Math.floor(Math.random() * 7) + 1;
-  const shape = PIECES[type].map(row => [...row]);
-  return { type, shape, x: Math.floor(COLS / 2) - Math.floor(shape[0].length / 2), y: 0 };
+  return makePiece(type);
+}
+
+function holdPiece() {
+  if (holdUsed) return;
+  const stored = makePiece(current.type, current.powerup);
+  if (held) {
+    if (collide(held.shape, held.x, held.y)) return; // no cabe: rechazar el intercambio
+    current = held;
+  } else {
+    current = next;
+    next = randomPiece();
+    if (collide(current.shape, current.x, current.y)) endGame();
+    drawNext();
+  }
+  held = stored;
+  holdUsed = true;
+  dropAccum = 0;
+  drawHold();
 }
 
 function collide(shape, ox, oy) {
@@ -301,12 +328,14 @@ function lockPiece() {
 }
 
 function spawn() {
+  holdUsed = false;
   current = next;
   next = randomPiece();
   if (collide(current.shape, current.x, current.y)) {
     endGame();
   }
   drawNext();
+  drawHold();
 }
 
 function applyTheme(theme) {
@@ -320,7 +349,7 @@ function applyTheme(theme) {
   themeBtn.setAttribute('aria-pressed', String(isLight));
   try { localStorage.setItem('theme', theme); } catch (e) { /* almacenamiento no disponible */ }
   // el loop se detiene en pausa y game over: repintar manualmente
-  if (current && next) { draw(); drawNext(); }
+  if (current && next) { draw(); drawNext(); drawHold(); }
 }
 
 function loadTheme() {
@@ -398,15 +427,25 @@ function draw() {
       drawBlock(ctx, current.x + c, current.y + r, current.shape[r][c], BLOCK, 1, current.powerup && POWERUP_ICONS[current.powerup]);
 }
 
-function drawNext() {
+function drawPreview(context, previewCanvas, piece) {
   const NB = 30;
-  nextCtx.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-  const shape = next.shape;
+  context.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+  if (!piece) return;
+  const shape = piece.shape;
   const offX = Math.floor((4 - shape[0].length) / 2);
   const offY = Math.floor((4 - shape.length) / 2);
   for (let r = 0; r < shape.length; r++)
     for (let c = 0; c < shape[r].length; c++)
-      drawBlock(nextCtx, offX + c, offY + r, shape[r][c], NB, 1, next.powerup && POWERUP_ICONS[next.powerup]);
+      drawBlock(context, offX + c, offY + r, shape[r][c], NB, 1, piece.powerup && POWERUP_ICONS[piece.powerup]);
+}
+
+function drawNext() {
+  drawPreview(nextCtx, nextCanvas, next);
+}
+
+function drawHold() {
+  holdCanvas.classList.toggle('hold-locked', !!holdUsed);
+  drawPreview(holdCtx, holdCanvas, held);
 }
 
 function endGame() {
@@ -467,6 +506,8 @@ function init() {
   gameOver = false;
   dropInterval = 1000;
   dropAccum = 0;
+  held = null;
+  holdUsed = false;
   nextPowerupAt = POWERUP_EVERY_LINES;
   powerupPending = false;
   freezeRemaining = 0;
@@ -505,6 +546,11 @@ document.addEventListener('keydown', e => {
     case 'Space':
       e.preventDefault();
       hardDrop();
+      break;
+    case 'KeyC':
+    case 'ShiftLeft':
+    case 'ShiftRight':
+      if (!e.repeat) holdPiece();
       break;
   }
   updateHUD();
