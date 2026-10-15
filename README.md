@@ -50,6 +50,16 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 
 ---
 
+## Modo desafío
+
+El selector **MODO** del panel permite elegir un desafío (cambiarlo reinicia la partida; el modo Clásico sigue siendo el predeterminado):
+
+- **Sprint**: limpia 40 líneas en 2 minutos. Si se acaba el tiempo, pierdes; si lo logras, aparece «¡DESAFÍO COMPLETADO!».
+- **Basura**: cada 10 s sube una fila de basura (gris, con un hueco) desde abajo.
+- **Obstáculos**: el tablero empieza con 6 filas de bloques fijos, sin líneas completas.
+- **Piezas invisibles**: los bloques fijados se ocultan; solo se ven brevemente (0,7 s) tras fijar una pieza.
+- **Rotación inversa**: desde el nivel 5 la rotación gira en sentido antihorario.
+
 ## Cómo ejecutar el juego
 
 No hay nada que instalar ni compilar. Tienes dos opciones:

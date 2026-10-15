@@ -138,6 +138,23 @@ body {
   display: none;
 }
 
+.challenge {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--label);
+}
+
+.challenge.hidden {
+  display: none;
+}
+
+#mode-select {
+  font: inherit;
+  font-size: 12px;
+  padding: 4px;
+  max-width: 100%;
+}
+
 /* ---- Controles ---- */
 .controls ul {
   list-style: none;
