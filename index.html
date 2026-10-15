@@ -29,6 +29,16 @@
           </select>
           <span class="challenge hidden" id="challenge-info"></span>
         </div>
+
+        <div class="panel-section">
+          <label class="label" for="skin-select">SKIN</label>
+          <select id="skin-select">
+            <option value="retro">Retro</option>
+            <option value="neon">Neon</option>
+            <option value="pastel">Pastel</option>
+            <option value="pixel">Pixel art</option>
+          </select>
+        </div>
         <div class="panel-section">
           <span class="label">SCORE</span>
           <span class="value" id="score">0</span>
@@ -74,7 +84,7 @@
             <li><kbd>E</kbd> habilidad (barra llena)</li>
             <li><kbd>1</kbd>–<kbd>4</kbd> elegir · <kbd>Esc</kbd> cancelar</li>
             <li><kbd>C</kbd> / <kbd>Shift</kbd> reservar</li>
-            <li><kbd>P</kbd> pausa</li>
+            <li><kbd>P</kbd> / <kbd>Esc</kbd> pausa</li>
           </ul>
         </div>
 
@@ -121,6 +131,32 @@
         <div id="start-records" class="records"></div>
         <button id="start-play" type="button" class="record-btn record-btn-primary">Jugar</button>
         <button id="records-reset" type="button" class="record-btn record-btn-danger">Resetear récords</button>
+      </div>
+    </div>
+
+    <div id="pause-menu" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+      <div class="overlay-box pause-box">
+        <p id="pause-title" class="pause-title">PAUSA</p>
+        <ul class="pause-options">
+          <li><button id="pause-resume" type="button">Reanudar</button></li>
+          <li><button id="pause-restart" type="button">Reiniciar</button></li>
+          <li><button id="pause-controls-btn" type="button" aria-expanded="false" aria-controls="pause-controls">Ver controles</button></li>
+          <li class="pause-level">
+            <label for="start-level">Nivel inicial</label>
+            <select id="start-level"></select>
+          </li>
+        </ul>
+        <p class="pause-hint">El nivel inicial se aplica en la próxima partida.</p>
+        <ul id="pause-controls" class="pause-controls hidden">
+          <li><kbd>←</kbd><kbd>→</kbd> mover</li>
+          <li><kbd>↑</kbd> / <kbd>X</kbd> rotar</li>
+          <li><kbd>↓</kbd> bajar</li>
+          <li><kbd>Space</kbd> caída</li>
+          <li><kbd>C</kbd> / <kbd>Shift</kbd> reservar</li>
+          <li><kbd>E</kbd> habilidad (barra llena)</li>
+          <li><kbd>P</kbd> / <kbd>Esc</kbd> pausa</li>
+          <li>Menú: <kbd>↑</kbd><kbd>↓</kbd> navegar · <kbd>←</kbd><kbd>→</kbd> nivel · <kbd>Enter</kbd> elegir</li>
+        </ul>
       </div>
     </div>
   </div>
