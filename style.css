@@ -148,7 +148,8 @@ body {
   display: none;
 }
 
-#mode-select {
+#mode-select,
+#skin-select {
   font: inherit;
   font-size: 12px;
   padding: 4px;
@@ -419,4 +420,12 @@ kbd {
 
 .pause-controls kbd {
   margin-right: 2px;
+}
+
+/* ---- Skins: Neon fuerza fondo negro en los canvas ---- */
+:root[data-skin="neon"] #board,
+:root[data-skin="neon"] #next-canvas,
+:root[data-skin="neon"] #hold-canvas,
+:root[data-skin="neon"] #peek-canvas {
+  background: #000;
 }
