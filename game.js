@@ -16,9 +16,14 @@ const COLORS = [
   '#b0bec5', // N - nut (tuerca), gris metálico
   '#fff176', // power-up (pieza especial)
   '#f06292', // comodín (resultado del Tinte)
+  '#4db6ac', // + - pentominó cruz, teal
+  '#9575cd', // U - pentominó, violeta
+  '#ff8a65', // Y - pentominó, coral
+  '#aed581', // single 1×1 (recompensa tras un Tetris)
 ];
 const POWERUP_TYPE = 9;
 const WILDCARD = 10;
+const SINGLE_TYPE = 14;
 
 const PIECES = [
   null,
@@ -31,10 +36,16 @@ const PIECES = [
   [[0,0,7],[7,7,7],[0,0,0]],                  // L
   [[8,8,8],[8,0,8],[8,8,8]],                  // N - tuerca (centro vacío)
   [[9]],                                       // power-up (1×1)
+  [[0,11,0],[11,11,11],[0,11,0]],             // + - pentominó cruz
+  [[12,0,12],[12,12,12],[0,0,0]],             // U - pentominó
+  [[0,13,0,0],[13,13,13,13],[0,0,0,0],[0,0,0,0]], // Y - pentominó
+  [[14]],                                      // single 1×1 (recompensa)
 ];
 
 const LINE_SCORES = [0, 100, 300, 500, 800];
 const NUT_CHANCE = 0.05; // probabilidad de que salga la tuerca (pieza reto)
+// probabilidad de cada pentominó (tipo → probabilidad); el resto del sorteo son las 7 estándar
+const PENTOMINO_CHANCE = { 11: 0.03, 12: 0.03, 13: 0.03 };
 const POWERUP_EVERY_LINES = 10; // cada cuántas líneas aparece un power-up
 const FREEZE_MS = 5000;         // duración del power-up Congelar
 const POWERUPS = ['bomb', 'lightning', 'dye', 'gravity', 'freeze'];
@@ -57,11 +68,22 @@ const themeBtn = document.getElementById('theme-toggle');
 const freezeEl = document.getElementById('freeze-indicator');
 
 let board, current, next, score, lines, level, paused, gameOver, lastTime, dropAccum, dropInterval, animId;
-let nextPowerupAt, powerupPending, freezeRemaining;
+let nextPowerupAt, powerupPending, singlePending, freezeRemaining;
 let gridColor, highlightColor;
 
 function createBoard() {
   return Array.from({ length: ROWS }, () => new Array(COLS).fill(0));
+}
+
+function rollType() {
+  let roll = Math.random();
+  if (roll < NUT_CHANCE) return 8;
+  roll -= NUT_CHANCE;
+  for (const [type, chance] of Object.entries(PENTOMINO_CHANCE)) {
+    if (roll < chance) return Number(type);
+    roll -= chance;
+  }
+  return Math.floor(Math.random() * 7) + 1;
 }
 
 function randomPiece() {
@@ -72,7 +94,8 @@ function randomPiece() {
       : POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
     return { type: POWERUP_TYPE, powerup, shape: [[POWERUP_TYPE]], x: Math.floor(COLS / 2), y: 0 };
   }
-  const type = Math.random() < NUT_CHANCE ? 8 : Math.floor(Math.random() * 7) + 1;
+  const type = singlePending ? SINGLE_TYPE : rollType();
+  singlePending = false;
   const shape = PIECES[type].map(row => [...row]);
   return { type, shape, x: Math.floor(COLS / 2) - Math.floor(shape[0].length / 2), y: 0 };
 }
@@ -129,6 +152,7 @@ function clearLines() {
     }
   }
   if (cleared) {
+    if (cleared === 4) singlePending = true; // recompensa tras un Tetris
     lines += cleared;
     while (lines >= nextPowerupAt) {
       powerupPending = true;
@@ -378,6 +402,7 @@ function init() {
   dropAccum = 0;
   nextPowerupAt = POWERUP_EVERY_LINES;
   powerupPending = false;
+  singlePending = false;
   freezeRemaining = 0;
   updateFreezeIndicator();
   lastTime = performance.now();
