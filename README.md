@@ -36,6 +36,7 @@ Es una versión jugable del Tetris clásico con todas las mecánicas que esperar
 - Tablero de **10 × 20** celdas.
 - Las **7 piezas estándar** (I, O, T, S, Z, J, L) con colores diferenciados.
 - Una **pieza reto, la Tuerca**: un anillo 3×3 con el centro vacío que aparece con poca frecuencia (~5%).
+- **Habilidades cargables**: limpiar líneas llena la barra de energía (1 línea: 20, 2: 40, 3: 70, 4: 100). Con la barra llena, `E` abre un menú (el juego se detiene) y la habilidad elegida gasta toda la barra: ver las siguientes 5 piezas (10 s), intercambiar la pieza actual por una de 3 opciones, ralentizar la caída 10 s, deshacer la última colocación (solo una; no devuelve energía) o reservar pieza (hold; repetirlo intercambia con la reservada). Si una habilidad no es posible (p. ej. la pieza no cabe) no se consume la energía.
 - **Pentominós** (`+`, `U`, `Y`): piezas de 5 bloques que aparecen ocasionalmente (~3% cada una).
 - **Pieza 1×1 de recompensa**: tras limpiar 4 líneas a la vez (Tetris), la siguiente pieza generada es un bloque único.
 - **Power-ups**: cada 10 líneas la siguiente pieza es una pieza especial 1×1 que se activa al aterrizar: 💣 Bomba (área 3×3), ⚡ Rayo (limpia su fila), 🎨 Tinte (los bloques del color sobre el que cae pasan a comodín), ⬇ Gravedad (compacta huecos) y ❄ Congelar (pausa la caída 5 s). Para probar uno, abre `index.html?powerup=bomb` (`bomb`, `lightning`, `dye`, `gravity`, `freeze`).
@@ -99,6 +100,8 @@ Después abre `http://localhost:8000` en el navegador.
 | `↑` o `X` | Rotar la pieza en sentido horario |
 | `↓`       | Soft drop (bajar más rápido)      |
 | `Espacio` | Hard drop (caída instantánea)     |
+| `E`       | Abrir menú de habilidades (barra llena) |
+| `1`–`5`   | Elegir habilidad (`Esc` cancela)  |
 | `C` / `Shift` | Reservar pieza (Hold), una vez por pieza |
 | `P`       | Pausar / reanudar                 |
 
