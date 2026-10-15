@@ -35,6 +35,21 @@
           <span class="freeze hidden" id="freeze-indicator"></span>
         </div>
 
+        <div class="panel-section">
+          <span class="label">ENERGÍA</span>
+          <div id="energy-bar" class="energy-bar" role="progressbar" aria-label="Energía de habilidades" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div id="energy-fill" class="energy-fill"></div>
+          </div>
+          <span class="energy-hint" id="energy-hint" aria-live="polite"></span>
+          <span class="freeze hidden" id="slow-indicator"></span>
+        </div>
+
+        <div class="panel-section">
+          <span class="label">HOLD</span>
+          <canvas id="hold-canvas" width="120" height="120" aria-label="Pieza reservada"></canvas>
+          <canvas id="peek-canvas" class="hidden" width="48" height="240" aria-label="Siguientes 5 piezas"></canvas>
+        </div>
+
         <div class="panel-section controls">
           <span class="label">CONTROLS</span>
           <ul>
@@ -42,6 +57,8 @@
             <li><kbd>↑</kbd> rotar</li>
             <li><kbd>↓</kbd> bajar</li>
             <li><kbd>Space</kbd> caída</li>
+            <li><kbd>E</kbd> habilidad (barra llena)</li>
+            <li><kbd>1</kbd>–<kbd>5</kbd> elegir · <kbd>Esc</kbd> cancelar</li>
             <li><kbd>P</kbd> pausa</li>
           </ul>
         </div>
@@ -59,7 +76,15 @@
       </aside>
     </div>
 
-    <div id="overlay" class="overlay hidden">
+    <div id="ability-menu" class="overlay hidden" role="dialog" aria-label="Elegir habilidad">
+      <div class="overlay-box">
+        <p>HABILIDAD</p>
+        <ul id="ability-list" class="ability-list"></ul>
+        <p id="ability-msg" class="ability-msg" role="alert"></p>
+      </div>
+    </div>
+
+    <div id="overlay"class="overlay hidden">
       <div class="overlay-box">
         <p id="overlay-title">GAME OVER</p>
         <p id="overlay-score"></p>
